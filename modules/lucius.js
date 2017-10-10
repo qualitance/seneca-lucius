@@ -1,15 +1,15 @@
 'use strict';
-const util = require('module-util');
+const util = require('./util');
 const {Message, Responder} = require('../message');
 const Connector = require('./connector');
 const {isAsyncFunction} = require('./util');
 const {LuciusError} = require('../error');
-const logger = require('module-logger');
+const logger = require('./logger');
 const logFormat = logger.formatter('SENECA');
 
 class Lucius {
     constructor(seneca) {
-        this.promisifiedAct = util.promise.promisify(seneca.act, seneca);
+        this.promisifiedAct = util.promisify(seneca.act, seneca);
         this.seneca = seneca;
     }
 
