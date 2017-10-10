@@ -20,7 +20,8 @@
 
 ## History
 
-* v1.0.0: Copied almost verbatim from the [World-Cleanup-Day](https://github.com/letsdoitworld/World-Cleanup-Day/) project, with minimal changes to make it work on its own.
+* v1.0.1, 2017-10-10: Minimal changes to make it work on its own.
+* v1.0.0, 2017-10-10: Copied verbatim from the [World-Cleanup-Day](https://github.com/letsdoitworld/World-Cleanup-Day/) project.
 
 ## Status and things to do
 
