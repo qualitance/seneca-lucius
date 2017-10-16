@@ -33,7 +33,7 @@
  *
  * @param {?MessageContent} [overwrite=null] Can be optionally initialized with an pre-existing content.
  */
-const Message = function (overwrite = null) {
+const LuciusMessage = function (overwrite = null) {
     /**
      * Establish the data structure of a message.
      * @type {MessageContent}
@@ -165,4 +165,4 @@ const Message = function (overwrite = null) {
     }
 };
 
-module.exports = {Message};
+module.exports = LuciusMessage;

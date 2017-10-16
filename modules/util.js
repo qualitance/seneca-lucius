@@ -42,4 +42,20 @@ module.exports = {
             });
         };
     },
+    filterCoreArgs: args => {
+        if (typeof args !== 'object' || !args || Array.isArray(args)) {
+            return args;
+        }
+        const out = {};
+        Object.getOwnPropertyNames(args).forEach(prop => {
+            if (prop.indexOf('$') === -1
+                && prop !== 'role'
+                && prop !== 'cmd'
+                && prop !== '__'
+            ) {
+                out[prop] = args[prop];
+            }
+        });
+        return out;
+    },
 };
