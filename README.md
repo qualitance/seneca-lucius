@@ -13,13 +13,18 @@
 * A standardized format for messaging payloads.
 * A common interface for sending successful or failure Seneca messages.
 * A common logging interface (built on top of Winston).
-* A connect-like chaining framework for encapsulating plugin functionality.
-* An interface for making and receiving Seneca messages.
 * A simple way of integrating all of the above with a Seneca plugin.
+* Optional JSON schema validation of message arguments and message output.
 * A middleware for integrating with Swagger-ified connect apps.
 
 ## History
 
+* v1.2.0, 2017-10-16: Complete rewrite of Lucius.register(), NOT backwards compatible! Changes:
+  * Complete rewrite of Lucius.register(), greatly simplifies plugin code.
+  * Clean up definitions file, leave only examples.
+  * Renamed Message and Responder to LuciusMessage and LuciusResponder.
+  * Implement JSON schema validation support (with ajv) for arguments and output.
+  * Pass only the relevant parts of the payload to plugins (trim Seneca routing info).
 * v1.0.1, 2017-10-10: Minimal changes to make it work on its own.
 * v1.0.0, 2017-10-10: Copied verbatim from the [World-Cleanup-Day](https://github.com/letsdoitworld/World-Cleanup-Day/) project.
 
@@ -27,15 +32,11 @@
 
 v1 is fairly over-engineered.
 
-### Goals for v1.2
-
-* Make the plugin integration truly connect instead of just connect-like.
-* A cleaner connect middleware.
-* Stop hardcoding the error registry.
-
 ### General goals
 
 * Documentation, examples.
+* A cleaner connect middleware.
+* Stop hardcoding the error registry.
 
 ## Authors and maintainers
 
