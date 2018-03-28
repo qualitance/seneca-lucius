@@ -1,12 +1,11 @@
 'use strict';
 const LUCIUS_ERROR_MARKER = 'lucius';
 const registry = require('./registry');
-const {LuciusError, LuciusSmuggleError} = require('./exceptions');
+const {LuciusError} = require('./exceptions');
 
 module.exports = {
     E: registry,
     LuciusError,
-    LuciusSmuggleError,
     isLuciusError: e => {
         return (
             e instanceof LuciusError

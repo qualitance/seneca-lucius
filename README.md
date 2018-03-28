@@ -46,5 +46,8 @@ Maintainer is [Ciprian Popovici](https://github.com/cprpopqual).
 
 ## License
 
-Lucius is licensed under [GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+Starting with version 2 Lucius is licensed under [MIT](https://choosealicense.com/licenses/mit/).
 
+Previous versions are licensed under [GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+If in doubt, refer to the `LICENSE` file under the branch/commit that you are checking out.

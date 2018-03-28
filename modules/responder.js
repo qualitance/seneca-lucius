@@ -1,9 +1,24 @@
 'use strict';
 const logger = require('./logger');
-const {LuciusError, LuciusSmuggleError, LUCIUS_ERROR_MARKER} = require('../error');
-const LuciusMessage = require('./message');
+const {LUCIUS_ERROR_MARKER} = require('../error');
+const errorFactory = require('../error/factory');
+const LuciusTools = require('./tools');
+
+const LuciusBreakoutError = errorFactory('LuciusBreakoutError', function (message) {
+    this.message = message;
+    this.stack = (new Error('just smuggling a failure message, ignore me')).stack;
+});
 
 class LuciusResponder {
+    /**
+     * Creates an instance of LuciusResponder.
+     * @param {Lucius} lucius A Lucius instance.
+     * @param {callback} next The next() callback for a seneca.act() endpoint.
+     * @param {string} senecaPattern A Seneca endpoint addressing pattern.
+     * @param {object} senecaArgs A raw Seneca messaging payload.
+     * @param {string} outputSchema Optionally provide a JSON schema for the output.
+     * @memberof LuciusResponder
+     */
     constructor(lucius, next, senecaPattern, senecaArgs, outputSchema) {
         this.lucius = lucius;
         this.next = next;
@@ -18,80 +33,78 @@ class LuciusResponder {
      * this response instance belongs.
      * @param {string} pattern Seneca message pattern identifier.
      * @param {any} [args={}] Optionally pass some parameters to the call.
-     * @param {any} [userInfo=null] Optionally pass user information to the call.
+     * @param {any} [sideload=null] Optionally overwrite sideloaded information.
      * @returns {any} Whatever the called endpoint returns.
-     * @throws {LuciusSmuggleError} Endpoint errors will throw a "magic" error.
+     * @throws {LuciusBreakoutError} Endpoint errors will throw a "magic" error.
      * @memberof LuciusResponder
      */
-    async inquest(pattern, args = {}, userInfo = null) {
-        const message = await this.lucius.request(pattern, args, userInfo);
+    async inquest(pattern, args = {}, sideload = null) {
+        const message = await this.request(pattern, args, sideload);
         if (message.isSuccessful()) {
             return message.getPayload();
         }
         else {
             // this special error will be intercepted by the handler's catch
-            throw new LuciusSmuggleError(message);
+            throw new LuciusBreakoutError(message);
         }
-    };
+    }
+
+    // lucius.request() wrapper that auto-propagates the sideload
+    request(pattern, args = {}, sideload = null) {
+        sideload = LuciusTools.extractArgSideload(LuciusTools.packArgSideload(args, sideload));
+        if (LuciusTools.isEmptyObject(sideload)) {
+            sideload = LuciusTools.extractArgSideload(this.senecaArgs);
+        }
+        return this.lucius.request(pattern, args, sideload);
+    }
 
     // next() wrapper that produces a successful response message
     async success(messageOrPayload = null) {
-        let message;
-        if (messageOrPayload instanceof LuciusMessage) {
-            message = messageOrPayload;
-        }
-        else {
-            // validate the response payload against schema, if any
-            this.lucius.validateOutputSchema(this.outputSchema, messageOrPayload, this.senecaPattern, this.senecaArgs);
-            // make sure the payload is put in a standard format
-            message = this.lucius.makeMessage();
-            message.setPayload(messageOrPayload);
-        }
+        // the payload either is already in message format, or we make it so
+        const message = LuciusTools.isMessage(messageOrPayload)
+            ? messageOrPayload
+            : LuciusTools.makeMessage().setPayload(messageOrPayload);
+        // validate the response payload against schema, if any
+        LuciusTools.validateOutputSchema(
+            this.outputSchema, message.getPayload(), this.senecaPattern, this.senecaArgs);
         // log the response
-        logger.debug.format('SENECA', 'RESP', this.senecaPattern, this.senecaArgs, message.getPayload());
+        logger.debug.format('RESP', this.senecaPattern, this.senecaArgs, '[PAYLOAD TRUNCATED...]');
         // call next()
         this.next(null, message.export());
-    };
+    }
 
     // next() wrapper that produces a failure response message
     failure(messageOrErrors) {
         let message;
-        if (messageOrErrors instanceof LuciusMessage) {
+        if (LuciusTools.isMessage(messageOrErrors)) {
             message = messageOrErrors;
         }
         else {
             let errorSet = messageOrErrors;
-            // sanity checks
             if (!Array.isArray(errorSet)) {
                 errorSet = [errorSet];
             }
-            errorSet.map((value, index) => {
-                if (!(value instanceof LuciusError)) {
-                    throw new TypeError(`Error at index ${index} must be instance of LuciusError`);
-                }
-            });
             // pack all errors in a standardized format
-            message = this.lucius.makeMessage();
+            message = LuciusTools.makeMessage();
             errorSet.forEach(e => {
                 e.marker = LUCIUS_ERROR_MARKER;
                 message.setError(e);
             });
         }
         // log the errors
-        logger.debug.format('SENECA', 'ERROR', this.senecaPattern, this.senecaArgs, `${message.getErrors().length} error(s)`);
         message.getErrors().forEach(e => {
-            logger.error.format('SENECA', '\error', this.senecaPattern, this.senecaArgs, e);
+            logger.error.format('ERROR', this.senecaPattern, this.senecaArgs, e);
         });
         // call next()
         return this.next(null, message.export());
-    };
+    }
 
     fatal(e) {
-        if (e instanceof LuciusSmuggleError) {
+        if (e instanceof LuciusBreakoutError) {
             return this.failure(e.message);
         }
-        e = this.lucius.makeFatalError(e);
-        logger.fatal.format('SENECA', 'CRASH', this.senecaPattern, this.senecaArgs, e);
+        e = LuciusTools.makeFatalError(e);
+        logger.fatal.format('CRASH', this.senecaPattern, this.senecaArgs, e);
         return this.next(e);
     }
 

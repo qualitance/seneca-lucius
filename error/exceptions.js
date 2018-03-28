@@ -1,6 +1,6 @@
 'use strict';
-const factory = require('./factory');
 const registry = require('./registry');
+const errorFactory = require('./factory');
 
 // XXX: We're keeping the error constructor as a standalone function so that
 // we can point it out to Error.captureStackTrace() to omit from the trace.
@@ -23,9 +23,5 @@ function LuciusErrorConstructor(msgCode, interpolationValues = {}) {
 }
 
 module.exports = {
-    LuciusError: factory('LuciusError', LuciusErrorConstructor),
-    LuciusSmuggleError: factory('LuciusSmuggleError', function (smuggledMessage) {
-        this.message = smuggledMessage;
-        this.stack = (new Error('smuggling a failure message, ignore me')).stack;
-    })
+    LuciusError: errorFactory('LuciusError', LuciusErrorConstructor),
 };
